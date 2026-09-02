@@ -108,6 +108,8 @@
   .slot input:disabled + label small{color:var(--err)}
   .slot.loading label small{color:var(--plum-soft)}
 
+  .slot-note{margin:10px 0 0;font-size:14px;color:var(--plum-soft)}
+  .slot-note strong{color:var(--err)}
   .agree{display:flex;gap:10px;align-items:flex-start;font-size:14px}
   .agree input{margin-top:4px;width:18px;height:18px;accent-color:var(--pink)}
 
@@ -161,7 +163,7 @@
 
     <ul class="facts">
       <li><b>Date</b><span>September 11, 2026</span></li>
-      <li><b>Time</b><span>12 NN – 3 PM</span></li>
+      <li><b>Time</b><span>12:00NN - 3:00PM</span></li>
       <li><b>Venue</b><span>McDonald's, Greenhills</span></li>
     </ul>
 
@@ -195,27 +197,24 @@
       </div>
       <div class="row">
         <div>
-          <label for="age">Age</label>
-          <input type="number" id="age" name="age" required min="1" max="120" inputmode="numeric">
+          <label for="ig">Instagram handle <small>— optional</small></label>
+          <div class="prefix"><input type="text" id="ig" name="ig" autocomplete="off" autocapitalize="none"></div>
         </div>
         <div>
-          <label for="ig">Instagram handle</label>
-          <div class="prefix"><input type="text" id="ig" name="ig" required autocomplete="off" autocapitalize="none"></div>
+          <label for="x">X (Twitter) handle <small>— optional</small></label>
+          <div class="prefix"><input type="text" id="x" name="x" autocomplete="off" autocapitalize="none"></div>
         </div>
-      </div>
-      <div>
-        <label for="x">X (Twitter) handle <small>— optional</small></label>
-        <div class="prefix"><input type="text" id="x" name="x" autocomplete="off" autocapitalize="none"></div>
       </div>
 
       <fieldset>
         <legend>Pick your time slot</legend>
         <div class="slots" id="slots"></div>
+        <p class="slot-note"><strong>Your selected time slot is final.</strong> No changing or rescheduling of slots.</p>
       </fieldset>
 
       <label class="agree">
         <input type="checkbox" id="agree" required>
-        <span>I'll bring a valid ID with a name that matches my registration, and I understand one registration is good for one person only.</span>
+        <span>I'll bring a valid ID with a name that matches my registration, and I understand one registration is good for one person only and my chosen time slot cannot be changed.</span>
       </label>
 
       <p class="error" id="formError"></p>
@@ -237,7 +236,7 @@
   // ── Paste your Google Apps Script web app URL between the quotes ──
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxI-pLnTzs1KiscuKE97R9i8IwpM9G1hmk-clvB9YW6TY9H8weQ43k81EkW89FckFA5qw/exec";
 
-  const SLOTS = ["12 NN – 1 PM", "1 PM – 2 PM", "2 PM – 3 PM"];
+  const SLOTS = ["12:00NN - 1:00PM", "1:00PM - 2:00PM", "2:00PM - 3:00PM"];
   const CAP = 60;
 
   const $ = id => document.getElementById(id);
@@ -256,7 +255,7 @@
       div.className = "slot";
       div.innerHTML = `
         <input type="radio" name="slot" id="${id}" value="${s}" ${full ? "disabled" : ""}>
-        <label for="${id}"><b>${s}</b><small>${full ? "Full" : left + " slot" + (left === 1 ? "" : "s") + " left"}</small></label>`;
+        <label for="${id}"><b>${s}</b>${full ? "<small>Full</small>" : ""}</label>`;
       slotsBox.appendChild(div);
     });
     return anyOpen;
@@ -290,7 +289,6 @@
     const name = $("name").value.trim();
     const email = $("email").value.trim();
     const mobile = $("mobile").value.trim();
-    const age = $("age").value.trim();
     const ig = $("ig").value.trim().replace(/^@/, "");
     const x = $("x").value.trim().replace(/^@/, "");
     const slotEl = document.querySelector('input[name="slot"]:checked');
@@ -298,8 +296,6 @@
     if (!name) return showError("Please enter your full name.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError("Please enter a valid email address.");
     if (mobile.replace(/\D/g, "").length < 10) return showError("Please enter a valid mobile number.");
-    if (!age) return showError("Please enter your age.");
-    if (!ig) return showError("Please enter your Instagram handle.");
     if (!slotEl) return showError("Please pick a time slot.");
     if (!$("agree").checked) return showError("Please tick the confirmation box.");
 
@@ -310,7 +306,7 @@
       const r = await fetch(SCRIPT_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ name, email, mobile, age, ig, x, slot: slotEl.value })
+        body: JSON.stringify({ name, email, mobile, ig, x, slot: slotEl.value })
       });
       const data = await r.json();
       if (data.ok) {
